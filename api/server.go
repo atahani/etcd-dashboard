@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -11,6 +12,7 @@ import (
 	"github.com/atahani/etcd-dashboard/api/graph/generated"
 	"github.com/atahani/etcd-dashboard/api/logger"
 	"github.com/sirupsen/logrus"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 var GitCommit string
@@ -31,6 +33,16 @@ func main() {
 
 	// initial the logger
 	logger := logger.New(conf)
+
+	// initial the etcd client
+	cli, err := clientv3.New(clientv3.Config{
+		Endpoints:   conf.EtcdEndpoints,
+		DialTimeout: 5 * time.Second,
+	})
+	if err != nil {
+		logger.WithField("EtcdEndpoints", conf.EtcdEndpoints).WithError(err).Error("something went wrong while connecting to etcd")
+	}
+	defer cli.Close()
 
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{}}))
 

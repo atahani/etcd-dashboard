@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
@@ -15,15 +16,17 @@ var (
 )
 
 type Env struct {
-	Port        int    `env:"PORT"`
-	Environment string `env:"GO_ENV"`
-	Version     string
-	LogLevel    logrus.Level `env:"LOG_LEVEL"`
+	Port          int    `env:"PORT"`
+	Environment   string `env:"GO_ENV"`
+	Version       string
+	LogLevel      logrus.Level `env:"LOG_LEVEL"`
+	EtcdEndpoints []string     `env:"ETCD_ENDPOINTS"`
 }
 
 var requiredEnvVars = []string{
 	"PORT",
 	"GO_ENV",
+	"ETCD_ENDPOINTS",
 }
 
 func GetConfig() (*Env, error) {
@@ -52,9 +55,10 @@ func GetConfig() (*Env, error) {
 		return nil, err
 	}
 	return &Env{
-		Port:        appPort,
-		Environment: os.Getenv("GO_ENV"),
-		LogLevel:    logLevel,
+		Port:          appPort,
+		Environment:   os.Getenv("GO_ENV"),
+		LogLevel:      logLevel,
+		EtcdEndpoints: strings.Split(os.Getenv("ETCD_ENDPOINTS"), ","),
 	}, err
 }
 
