@@ -1,8 +1,17 @@
-type Query {
-  hello: String!
+schema {
+  query: Queries
+  mutation: Mutations
 }
 
-type User {
-  id: ID!
-  name: String!
+type Queries {
+  get(key: String!): [KeyValue!]!
+}
+
+type Mutations {
+  put(key: String!, value: String!): Int!
+}
+
+type KeyValue {
+  key: String!
+  value: String!
 }

@@ -7,13 +7,39 @@ import (
 	"context"
 
 	"github.com/atahani/etcd-dashboard/api/graph/generated"
+	"github.com/atahani/etcd-dashboard/api/graph/model"
 )
 
-func (r *queryResolver) Hello(ctx context.Context) (string, error) {
-	return "Hello World", nil
+func (r *mutationsResolver) Put(ctx context.Context, key string, value string) (int, error) {
+	res, err := r.EtcdCli.Put(ctx, key, value)
+	if err != nil {
+		r.Logger.WithError(err).Error("Mutation -> Put")
+		return 0, err
+	}
+	return int(res.Header.Revision), nil
 }
 
-// Query returns generated.QueryResolver implementation.
-func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
+func (r *queriesResolver) Get(ctx context.Context, key string) ([]*model.KeyValue, error) {
+	res, err := r.EtcdCli.Get(ctx, key)
+	if err != nil {
+		r.Logger.WithError(err).Error("Query -> get")
+		return nil, err
+	}
+	keysValues := []*model.KeyValue{}
+	for _, kv := range res.Kvs {
+		keysValues = append(keysValues, &model.KeyValue{
+			Key:   string(kv.Key),
+			Value: string(kv.Value),
+		})
+	}
+	return keysValues, nil
+}
 
-type queryResolver struct{ *Resolver }
+// Mutations returns generated.MutationsResolver implementation.
+func (r *Resolver) Mutations() generated.MutationsResolver { return &mutationsResolver{r} }
+
+// Queries returns generated.QueriesResolver implementation.
+func (r *Resolver) Queries() generated.QueriesResolver { return &queriesResolver{r} }
+
+type mutationsResolver struct{ *Resolver }
+type queriesResolver struct{ *Resolver }
