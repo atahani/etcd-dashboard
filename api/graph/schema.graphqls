@@ -3,15 +3,77 @@ schema {
   mutation: Mutations
 }
 
+enum Role {
+  ROOT
+}
+
+directive @hasRole(role: Role!) on FIELD_DEFINITION
+
 type Queries {
+  users: [String!]! @hasRole(role: ROOT)
+  roles(username: String): [String!]! @hasRole(role: ROOT)
+  permissions(role: String, username: String): [RolePermission!]! @hasRole(role: ROOT)
   get(key: String!): [KeyValue!]!
 }
 
 type Mutations {
-  put(key: String!, value: String!): Int!
+  initialize: InitializeResult!
+  addRole(name: String!): Boolean! @hasRole(role: ROOT)
+  assignRoleToUser(username: String!, role: String!): Boolean! @hasRole(role: ROOT)
+  addUser(data: AddUserInput!): AddUserResult! @hasRole(role: ROOT)
+  grantPermission(data: GrantPermissionInput!): Boolean! @hasRole(role: ROOT)
+  login(username: String!, password: String!): LoginResult!
+  put(data: PutInput!): PutResult!
 }
 
 type KeyValue {
   key: String!
   value: String!
+}
+
+type InitializeResult {
+  rootPassword: String!
+  adminPassword: String!
+}
+
+input AddUserInput {
+  username: String!
+  password: String
+  roles: [String]!
+}
+
+type AddUserResult {
+  password: String!
+}
+
+type RolePermission {
+  key: String!
+  rangeEnd: String!
+  read: Boolean!
+  write: Boolean!
+}
+
+input GrantPermissionInput {
+  role: String!
+  key: String!
+  rangeEnd: String!
+  read: Boolean!
+  write: Boolean!
+}
+
+type LoginResult {
+  username: String!
+  roles: [String!]!
+  permissions: [RolePermission!]!
+}
+
+input PutInput {
+  key: String!
+  value: String!
+  ttl: Int
+}
+
+type PutResult {
+  revision: Int!
+  leaseId: Int
 }

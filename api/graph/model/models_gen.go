@@ -2,7 +2,99 @@
 
 package model
 
+import (
+	"fmt"
+	"io"
+	"strconv"
+)
+
+type AddUserInput struct {
+	Username string    `json:"username"`
+	Password *string   `json:"password"`
+	Roles    []*string `json:"roles"`
+}
+
+type AddUserResult struct {
+	Password string `json:"password"`
+}
+
+type GrantPermissionInput struct {
+	Role     string `json:"role"`
+	Key      string `json:"key"`
+	RangeEnd string `json:"rangeEnd"`
+	Read     bool   `json:"read"`
+	Write    bool   `json:"write"`
+}
+
+type InitializeResult struct {
+	RootPassword  string `json:"rootPassword"`
+	AdminPassword string `json:"adminPassword"`
+}
+
 type KeyValue struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`
+}
+
+type LoginResult struct {
+	Username    string            `json:"username"`
+	Roles       []string          `json:"roles"`
+	Permissions []*RolePermission `json:"permissions"`
+}
+
+type PutInput struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+	TTL   *int   `json:"ttl"`
+}
+
+type PutResult struct {
+	Revision int  `json:"revision"`
+	LeaseID  *int `json:"leaseId"`
+}
+
+type RolePermission struct {
+	Key      string `json:"key"`
+	RangeEnd string `json:"rangeEnd"`
+	Read     bool   `json:"read"`
+	Write    bool   `json:"write"`
+}
+
+type Role string
+
+const (
+	RoleRoot Role = "ROOT"
+)
+
+var AllRole = []Role{
+	RoleRoot,
+}
+
+func (e Role) IsValid() bool {
+	switch e {
+	case RoleRoot:
+		return true
+	}
+	return false
+}
+
+func (e Role) String() string {
+	return string(e)
+}
+
+func (e *Role) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = Role(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid Role", str)
+	}
+	return nil
+}
+
+func (e Role) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }

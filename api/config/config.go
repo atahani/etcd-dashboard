@@ -16,17 +16,23 @@ var (
 )
 
 type Env struct {
-	Port          int    `env:"PORT"`
-	Environment   string `env:"GO_ENV"`
-	Version       string
-	LogLevel      logrus.Level `env:"LOG_LEVEL"`
-	EtcdEndpoints []string     `env:"ETCD_ENDPOINTS"`
+	Port             int    `env:"PORT"`
+	Environment      string `env:"GO_ENV"`
+	Version          string
+	LogLevel         logrus.Level `env:"LOG_LEVEL"`
+	JWTSignKey       string       `env:"JWT_SIGN_KEY"`
+	EtcdEndpoints    []string     `env:"ETCD_ENDPOINTS"`
+	EtcdRootPassword string       `env:"ETCD_ROOT_PASSWORD"`
+	EtcdJwtTTLMin    int          `env:"ETCD_JWT_TTL_MIN"`
 }
 
 var requiredEnvVars = []string{
 	"PORT",
 	"GO_ENV",
+	"JWT_SIGN_KEY",
 	"ETCD_ENDPOINTS",
+	"ETCD_ROOT_PASSWORD",
+	"ETCD_JWT_TTL_MIN",
 }
 
 func GetConfig() (*Env, error) {
@@ -54,11 +60,18 @@ func GetConfig() (*Env, error) {
 	if err != nil {
 		return nil, err
 	}
+	jwtTTL, err := strconv.Atoi(os.Getenv("ETCD_JWT_TTL_MIN"))
+	if err != nil {
+		return nil, err
+	}
 	return &Env{
-		Port:          appPort,
-		Environment:   os.Getenv("GO_ENV"),
-		LogLevel:      logLevel,
-		EtcdEndpoints: strings.Split(os.Getenv("ETCD_ENDPOINTS"), ","),
+		Port:             appPort,
+		Environment:      os.Getenv("GO_ENV"),
+		LogLevel:         logLevel,
+		JWTSignKey:       os.Getenv("JWT_SIGN_KEY"),
+		EtcdEndpoints:    strings.Split(os.Getenv("ETCD_ENDPOINTS"), ","),
+		EtcdRootPassword: os.Getenv("ETCD_ROOT_PASSWORD"),
+		EtcdJwtTTLMin:    jwtTTL,
 	}, err
 }
 

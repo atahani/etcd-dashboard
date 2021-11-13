@@ -1,8 +1,9 @@
 package graph
 
 import (
+	"github.com/atahani/etcd-dashboard/api/config"
+	"github.com/atahani/etcd-dashboard/api/etcd"
 	"github.com/sirupsen/logrus"
-	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 //go:generate go run github.com/99designs/gqlgen
@@ -12,6 +13,7 @@ import (
 // It serves as dependency injection for your app, add any dependencies you require here.
 
 type Resolver struct {
-	Logger  *logrus.Logger
-	EtcdCli *clientv3.Client
+	Etcd   *etcd.Etcd
+	Conf   *config.Env
+	Logger *logrus.Logger
 }
