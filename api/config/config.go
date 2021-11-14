@@ -22,6 +22,7 @@ type Env struct {
 	LogLevel         logrus.Level `env:"LOG_LEVEL"`
 	Timeout          int16        `env:"TIMEOUT"`
 	JWTSignKey       string       `env:"JWT_SIGN_KEY"`
+	ClientEndpoints  []string     `env:"CLIENT_ENDPOINTS"`
 	EtcdEndpoints    []string     `env:"ETCD_ENDPOINTS"`
 	EtcdRootPassword string       `env:"ETCD_ROOT_PASSWORD"`
 	EtcdJwtTTLMin    int          `env:"ETCD_JWT_TTL_MIN"`
@@ -31,6 +32,7 @@ var requiredEnvVars = []string{
 	"PORT",
 	"GO_ENV",
 	"TIMEOUT",
+	"CLIENT_ENDPOINTS",
 	"JWT_SIGN_KEY",
 	"ETCD_ENDPOINTS",
 	"ETCD_ROOT_PASSWORD",
@@ -76,6 +78,7 @@ func GetConfig() (*Env, error) {
 		Environment:      os.Getenv("GO_ENV"),
 		LogLevel:         logLevel,
 		Timeout:          int16(timeout),
+		ClientEndpoints:  strings.Split(os.Getenv("CLIENT_ENDPOINTS"), ","),
 		JWTSignKey:       os.Getenv("JWT_SIGN_KEY"),
 		EtcdEndpoints:    strings.Split(os.Getenv("ETCD_ENDPOINTS"), ","),
 		EtcdRootPassword: os.Getenv("ETCD_ROOT_PASSWORD"),

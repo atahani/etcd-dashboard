@@ -13,6 +13,7 @@ import (
 	"github.com/atahani/etcd-dashboard/api/logger"
 	"github.com/atahani/etcd-dashboard/api/middlewares"
 	"github.com/gorilla/mux"
+	"github.com/rs/cors"
 	"github.com/sirupsen/logrus"
 )
 
@@ -47,6 +48,10 @@ func main() {
 		Directives: graph.MakeDirectives(),
 	}))
 	sm := mux.NewRouter()
+	sm.Use(cors.New(cors.Options{
+		AllowedOrigins:   conf.ClientEndpoints,
+		AllowCredentials: true,
+	}).Handler)
 	sm.Use(middlewares.WithTimeout(conf.Timeout))
 	sm.Use(middlewares.WithCookie(conf.JWTSignKey))
 
