@@ -30,6 +30,9 @@ func (r *mutationsResolver) Initialize(ctx context.Context) (*model.InitializeRe
 	// check the auth status
 	authStatus, err := cli.Auth.AuthStatus(ctx)
 	if err != nil {
+		if ok, err := r.Etcd.ProcessCommonError(err); ok {
+			return nil, err
+		}
 		// return unknown error on -> "etcdserver: user name is empty"
 		if status.Code(err) == codes.Unknown {
 			// means needs Username and Password
@@ -65,6 +68,9 @@ func (r *mutationsResolver) Initialize(ctx context.Context) (*model.InitializeRe
 	// 4. now we can enable the authentication mode
 	_, err = cli.Auth.AuthEnable(ctx)
 	if err != nil {
+		if ok, err := r.Etcd.ProcessCommonError(err); ok {
+			return nil, err
+		}
 		msg := "etcd -> AuthEnable failed"
 		r.Logger.WithError(err).Error(msg)
 		return nil, fmt.Errorf("%s -> %s", msg, err)
@@ -86,6 +92,9 @@ func (r *mutationsResolver) AddRole(ctx context.Context, name string) (bool, err
 	defer cli.Close()
 	_, err = cli.Auth.RoleAdd(ctx, name)
 	if err != nil {
+		if ok, err := r.Etcd.ProcessCommonError(err); ok {
+			return false, err
+		}
 		msg := "something went wrong while adding new role, name=%s"
 		r.Logger.WithError(err).Errorf(msg, name)
 		return false, fmt.Errorf(msg, name)
@@ -101,6 +110,9 @@ func (r *mutationsResolver) AssignRoleToUser(ctx context.Context, username strin
 	defer cli.Close()
 	_, err = cli.UserGrantRole(ctx, username, role)
 	if err != nil {
+		if ok, err := r.Etcd.ProcessCommonError(err); ok {
+			return false, err
+		}
 		msg := "something went wrong while assigning %s role to %s user"
 		r.Logger.WithError(err).Errorf(msg, role, username)
 		return false, fmt.Errorf(msg, role, username)
@@ -129,6 +141,9 @@ func (r *mutationsResolver) AddUser(ctx context.Context, data model.AddUserInput
 	// 2. add the user to the etcd users
 	_, err = cli.Auth.UserAdd(ctx, data.Username, password)
 	if err != nil {
+		if ok, err := r.Etcd.ProcessCommonError(err); ok {
+			return nil, err
+		}
 		r.Logger.WithError(err).WithFields(logrus.Fields{
 			"name":           data.Username,
 			"passwordLength": len(password),
@@ -163,6 +178,9 @@ func (r *mutationsResolver) GrantPermission(ctx context.Context, data model.Gran
 	}
 	_, err = cli.RoleGrantPermission(ctx, data.Role, data.Key, data.RangeEnd, permType)
 	if err != nil {
+		if ok, err := r.Etcd.ProcessCommonError(err); ok {
+			return false, err
+		}
 		msg := "something went wrong while grant permission for a role"
 		r.Logger.WithField("input", data).WithError(err).Error(msg)
 		return false, fmt.Errorf(msg)
@@ -179,6 +197,9 @@ func (r *mutationsResolver) Login(ctx context.Context, username string, password
 	defer cli.Close()
 	res, err := cli.Auth.Authenticate(ctx, username, password)
 	if err != nil {
+		if ok, err := r.Etcd.ProcessCommonError(err); ok {
+			return nil, err
+		}
 		r.Logger.WithError(err).WithFields(logrus.Fields{
 			"name":           username,
 			"passwordLength": len(password),
@@ -233,6 +254,9 @@ func (r *mutationsResolver) Put(ctx context.Context, data model.PutInput) (*mode
 		// create a new lease
 		resp, err := cli.Grant(ctx, int64(*data.TTL))
 		if err != nil {
+			if ok, err := r.Etcd.ProcessCommonError(err); ok {
+				return nil, err
+			}
 			msg := "failed to create a new lease"
 			r.Logger.WithError(err).Error(msg)
 			return nil, fmt.Errorf(msg)
@@ -240,6 +264,9 @@ func (r *mutationsResolver) Put(ctx context.Context, data model.PutInput) (*mode
 		// put the key with lease
 		res, err := cli.Put(ctx, data.Key, data.Value, clientv3.WithLease(resp.ID))
 		if err != nil {
+			if ok, err := r.Etcd.ProcessCommonError(err); ok {
+				return nil, err
+			}
 			msg := "failed to put the key %s"
 			r.Logger.WithError(err).Errorf(msg, data.Key)
 			return nil, fmt.Errorf(msg, data.Key)
@@ -252,6 +279,9 @@ func (r *mutationsResolver) Put(ctx context.Context, data model.PutInput) (*mode
 	}
 	res, err := cli.Put(ctx, data.Key, data.Value)
 	if err != nil {
+		if ok, err := r.Etcd.ProcessCommonError(err); ok {
+			return nil, err
+		}
 		msg := "failed to put the key %s"
 		r.Logger.WithError(err).Errorf(msg, data.Key)
 		return nil, fmt.Errorf(msg, data.Key)
@@ -269,6 +299,9 @@ func (r *queriesResolver) Users(ctx context.Context) ([]string, error) {
 	defer cli.Close()
 	res, err := cli.Auth.UserList(ctx)
 	if err != nil {
+		if ok, err := r.Etcd.ProcessCommonError(err); ok {
+			return nil, err
+		}
 		msg := "something went wrong while getting user list"
 		r.Logger.WithError(err).Error(msg)
 		return nil, fmt.Errorf(msg)
@@ -286,6 +319,9 @@ func (r *queriesResolver) Roles(ctx context.Context, username *string) ([]string
 	if username != nil {
 		res, err := cli.UserGet(ctx, *username)
 		if err != nil {
+			if ok, err := r.Etcd.ProcessCommonError(err); ok {
+				return nil, err
+			}
 			msg := "something went wrong while getting user info"
 			r.Logger.WithField("username", username).WithError(err).Error(msg)
 			return nil, fmt.Errorf(msg)
@@ -294,6 +330,9 @@ func (r *queriesResolver) Roles(ctx context.Context, username *string) ([]string
 	} else {
 		res, err := cli.Auth.RoleList(ctx)
 		if err != nil {
+			if ok, err := r.Etcd.ProcessCommonError(err); ok {
+				return nil, err
+			}
 			msg := "something went wrong while getting role list"
 			r.Logger.WithError(err).Error(msg)
 			return nil, fmt.Errorf(msg)
@@ -312,6 +351,9 @@ func (r *queriesResolver) Permissions(ctx context.Context, role *string, usernam
 	if role != nil {
 		res, err := cli.RoleGet(ctx, *role)
 		if err != nil {
+			if ok, err := r.Etcd.ProcessCommonError(err); ok {
+				return nil, err
+			}
 			msg := "something went wrong while getting the %s role"
 			r.Logger.WithError(err).Errorf(msg, role)
 			return nil, fmt.Errorf(msg, role)
@@ -357,6 +399,9 @@ func (r *queriesResolver) Get(ctx context.Context, key string) ([]*model.KeyValu
 	defer cli.Close()
 	res, err := cli.Get(ctx, key)
 	if err != nil {
+		if ok, err := r.Etcd.ProcessCommonError(err); ok {
+			return nil, err
+		}
 		r.Logger.WithError(err).Error("Query -> get")
 		return nil, err
 	}

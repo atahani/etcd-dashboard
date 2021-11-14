@@ -47,6 +47,7 @@ func main() {
 		Directives: graph.MakeDirectives(),
 	}))
 	sm := mux.NewRouter()
+	sm.Use(middlewares.WithTimeout(conf.Timeout))
 	sm.Use(middlewares.WithCookie(conf.JWTSignKey))
 
 	sm.Handle("/", playground.Handler("GraphQL playground", "/query"))

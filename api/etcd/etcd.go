@@ -28,6 +28,9 @@ func (e *Etcd) GetClientWithoutAuth() (*clientv3.Client, error) {
 		DialTimeout: 5 * time.Second,
 	})
 	if err != nil {
+		if ok, err := e.ProcessCommonError(err); ok {
+			return nil, err
+		}
 		msg := "failed to create new etcd client without authentication"
 		e.Logger.WithField("EtcdEndpoints", e.Conf.EtcdEndpoints).WithError(err).Error(msg)
 		return nil, fmt.Errorf(msg)
@@ -43,6 +46,9 @@ func (e *Etcd) GetClientAsRoot() (*clientv3.Client, error) {
 		Password:    e.Conf.EtcdRootPassword,
 	})
 	if err != nil {
+		if ok, err := e.ProcessCommonError(err); ok {
+			return nil, err
+		}
 		msg := "failed to create new etcd client as Root"
 		e.Logger.WithField("EtcdEndpoints", e.Conf.EtcdEndpoints).WithError(err).Error(msg)
 		return nil, fmt.Errorf(msg)
@@ -66,9 +72,22 @@ func (e *Etcd) GetClient(ctx context.Context) (*clientv3.Client, error) {
 		DialOptions: []grpc.DialOption{grpc.WithPerRPCCredentials(c.PerRPCCredentials())},
 	})
 	if err != nil {
+		if ok, err := e.ProcessCommonError(err); ok {
+			return nil, err
+		}
 		msg := "failed to create new etcd client with context"
 		e.Logger.WithField("EtcdEndpoints", e.Conf.EtcdEndpoints).WithError(err).Error(msg)
 		return nil, fmt.Errorf(msg)
 	}
 	return cli, nil
+}
+
+func (e *Etcd) ProcessCommonError(err error) (bool, error) {
+	if err == context.Canceled {
+		return true, fmt.Errorf("context cancenled")
+	}
+	if err == context.DeadlineExceeded || err == grpc.ErrClientConnTimeout || err == grpc.ErrClientConnClosing || err == grpc.ErrServerStopped {
+		return true, fmt.Errorf("etcd timeout")
+	}
+	return false, nil
 }
