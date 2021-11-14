@@ -2,9 +2,9 @@ import { ChakraProvider, Grid, theme, Box } from '@chakra-ui/react'
 import { Routes, Route } from 'react-router-dom'
 import * as React from 'react'
 
-import ColorModeSwitcher from '../../components/ColorModeSwitcher'
-import Home from '../Home'
-import Login from '../Login'
+import ColorModeSwitcher from 'components/ColorModeSwitcher'
+import Home from 'containers/Home'
+import Login from 'containers/Login'
 
 export const App: React.FC = () => (
     <ChakraProvider theme={theme}>
