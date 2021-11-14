@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/atahani/etcd-dashboard/api/constant"
@@ -199,6 +200,9 @@ func (r *mutationsResolver) Login(ctx context.Context, username string, password
 	if err != nil {
 		if ok, err := r.Etcd.ProcessCommonError(err); ok {
 			return nil, err
+		}
+		if strings.Contains(err.Error(), "authentication failed"){
+			return nil, fmt.Errorf("username or password is incorrect")
 		}
 		r.Logger.WithError(err).WithFields(logrus.Fields{
 			"name":           username,
