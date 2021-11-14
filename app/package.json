@@ -2,7 +2,9 @@
     "name": "app",
     "version": "0.1.0",
     "private": true,
+    "license": "MIT",
     "dependencies": {
+        "@apollo/react-hooks": "^4.0.0",
         "@chakra-ui/react": "^1.0.0",
         "@emotion/react": "^11.0.0",
         "@emotion/styled": "^11.0.0",
@@ -14,6 +16,8 @@
         "@types/react": "^16.9.0",
         "@types/react-dom": "^16.9.0",
         "framer-motion": "^4.0.0",
+        "graphql": "^15.7.1",
+        "graphql-tag": "^2.12.6",
         "prettier": "^2.4.1",
         "react": "^17.0.2",
         "react-dom": "^17.0.2",
@@ -29,8 +33,10 @@
         "lint": "eslint \"{src,apps,libs,test,cypress}/**/*.ts\" --fix",
         "start": "react-scripts start",
         "build": "react-scripts build",
+        "download-schema": "apollo service:download --endpoint=http://localhost:6464/ graphql-schema.json",
         "test": "react-scripts test",
-        "eject": "react-scripts eject"
+        "eject": "react-scripts eject",
+        "codegen": "graphql-codegen --config codegen.yml"
     },
     "eslintConfig": {
         "extends": "react-app"
@@ -46,5 +52,13 @@
             "last 1 firefox version",
             "last 1 safari version"
         ]
+    },
+    "devDependencies": {
+        "@graphql-codegen/cli": "2.2.2",
+        "@graphql-codegen/fragment-matcher": "3.2.0",
+        "@graphql-codegen/introspection": "2.1.0",
+        "@graphql-codegen/typescript": "2.3.1",
+        "@graphql-codegen/typescript-operations": "2.2.0",
+        "@graphql-codegen/typescript-react-apollo": "3.2.1"
     }
 }
