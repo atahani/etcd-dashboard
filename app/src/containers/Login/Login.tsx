@@ -4,7 +4,13 @@ import { FormControl, FormLabel } from '@chakra-ui/form-control'
 import { Input } from '@chakra-ui/input'
 import { SubmitHandler, useForm } from 'react-hook-form'
 import { useColorModeValue } from '@chakra-ui/color-mode'
+import { useMutation } from '@apollo/client'
+import { useToast } from '@chakra-ui/react'
 import React from 'react'
+
+import { handleCommonErr } from 'utils/graphql/handleError'
+import { LOGIN } from 'utils/graphql/gql'
+import { LoginResult, MutationsLoginArgs } from 'types/graphql'
 
 type LoginInput = {
     username: string
@@ -15,9 +21,27 @@ const Login: React.FC = () => {
     const {
         register,
         handleSubmit,
+        setError,
         formState: { errors },
     } = useForm<LoginInput>()
-    const onSubmit: SubmitHandler<LoginInput> = (data) => console.log(data)
+    const toast = useToast()
+    const [login, { loading }] = useMutation<LoginResult, MutationsLoginArgs>(LOGIN, {
+        onCompleted: (data) => {
+            console.log('login successfully', data)
+        },
+        onError: (error) =>
+            handleCommonErr({
+                error,
+                toast,
+                handleMore: () => {
+                    toast({ description: error.message, status: 'error', isClosable: true })
+                    setError('password', { message: error.message, type: 'value' })
+                },
+            }),
+    })
+    const onSubmit: SubmitHandler<LoginInput> = (data) => {
+        login({ variables: { ...data } })
+    }
     return (
         <Center>
             <Stack spacing={8} mx={'auto'} maxW={'lg'} py={12} px={6}>
@@ -28,7 +52,7 @@ const Login: React.FC = () => {
                 <Box rounded={'lg'} bg={useColorModeValue('white', 'gray.700')} boxShadow={'lg'} p={8}>
                     <Stack spacing={4}>
                         <form onSubmit={handleSubmit(onSubmit)}>
-                            <FormControl id="username">
+                            <FormControl id="username" isRequired>
                                 <FormLabel>Username</FormLabel>
                                 <Input
                                     type="text"
@@ -36,7 +60,7 @@ const Login: React.FC = () => {
                                     isInvalid={!!errors.username}
                                 />
                             </FormControl>
-                            <FormControl id="password" marginTop="2">
+                            <FormControl id="password" marginTop="2" isRequired>
                                 <FormLabel>Password</FormLabel>
                                 <Input
                                     type="password"
@@ -53,6 +77,7 @@ const Login: React.FC = () => {
                                 }}
                                 type="submit"
                                 isFullWidth
+                                disabled={loading}
                             >
                                 Sign in
                             </Button>
