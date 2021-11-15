@@ -5,6 +5,7 @@ import * as React from 'react'
 import ColorModeSwitcher from 'components/ColorModeSwitcher'
 import Home from 'containers/Home'
 import Login from 'containers/Login'
+import PrivateRoute from 'components/PrivateRoute'
 
 export const App: React.FC = () => (
     <ChakraProvider theme={theme}>
@@ -14,7 +15,14 @@ export const App: React.FC = () => (
                 <Grid minH="100vh">
                     <Routes>
                         <Route path="/login" element={<Login />} />
-                        <Route path="/" element={<Home />} />
+                        <Route
+                            path="/"
+                            element={
+                                <PrivateRoute>
+                                    <Home />
+                                </PrivateRoute>
+                            }
+                        />
                     </Routes>
                 </Grid>
             </Grid>
