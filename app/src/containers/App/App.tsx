@@ -2,29 +2,25 @@ import { ChakraProvider, Grid, theme, Box } from '@chakra-ui/react'
 import { Routes, Route } from 'react-router-dom'
 import * as React from 'react'
 
-import ColorModeSwitcher from 'components/ColorModeSwitcher'
-import Home from 'containers/Home'
+import Dashboard from 'containers/Dashboard'
 import Login from 'containers/Login'
 import PrivateRoute from 'components/PrivateRoute'
 
 export const App: React.FC = () => (
     <ChakraProvider theme={theme}>
-        <Box fontSize="xl">
-            <Grid minH="100vh" p={3}>
-                <ColorModeSwitcher justifySelf="flex-end" />
-                <Grid minH="100vh">
-                    <Routes>
-                        <Route path="/login" element={<Login />} />
-                        <Route
-                            path="/"
-                            element={
-                                <PrivateRoute>
-                                    <Home />
-                                </PrivateRoute>
-                            }
-                        />
-                    </Routes>
-                </Grid>
+        <Box>
+            <Grid minH="100vh">
+                <Routes>
+                    <Route path="/login" element={<Login />} />
+                    <Route
+                        path="/"
+                        element={
+                            <PrivateRoute>
+                                <Dashboard />
+                            </PrivateRoute>
+                        }
+                    />
+                </Routes>
             </Grid>
         </Box>
     </ChakraProvider>

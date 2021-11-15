@@ -1,16 +1,16 @@
-import * as React from 'react'
-import { chakra, keyframes, ImageProps, forwardRef, usePrefersReducedMotion } from '@chakra-ui/react'
-import logo from './logo.svg'
+import { useColorModeValue } from '@chakra-ui/color-mode'
+import { Text, TextProps } from '@chakra-ui/layout'
+import React from 'react'
 
-const spin = keyframes`
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-`
-
-export const Logo = forwardRef<ImageProps, 'img'>((props, ref) => {
-    const prefersReducedMotion = usePrefersReducedMotion()
-
-    const animation = prefersReducedMotion ? undefined : `${spin} infinite 20s linear`
-
-    return <chakra.img animation={animation} src={logo} ref={ref} {...props} />
-})
+export const Logo: React.FC<TextProps> = ({ ...rest }: TextProps) => (
+    <Text
+        bg="white"
+        bgGradient={useColorModeValue('linear(blue.100 10%, gray.200 25%, blue.600 50%)', undefined)}
+        bgClip="text"
+        fontSize="3xl"
+        fontWeight="extrabold"
+        {...rest}
+    >
+        Etcd
+    </Text>
+)
