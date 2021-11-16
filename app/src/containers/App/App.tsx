@@ -4,6 +4,7 @@ import * as React from 'react'
 
 import Dashboard from 'containers/Dashboard'
 import Login from 'containers/Login'
+import Logout from 'containers/Logout'
 import PrivateRoute from 'components/PrivateRoute'
 
 export const App: React.FC = () => (
@@ -12,6 +13,7 @@ export const App: React.FC = () => (
             <Grid minH="100vh">
                 <Routes>
                     <Route path="/login" element={<Login />} />
+                    <Route path="/logout" element={<Logout />} />
                     <Route
                         path="/"
                         element={

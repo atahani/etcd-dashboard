@@ -3,6 +3,7 @@ import { HStack, Text, IconButton, useColorModeValue, Menu, MenuButton, MenuList
 import React from 'react'
 
 import { getUsername } from 'utils/persistData'
+import { Link } from 'react-router-dom'
 
 export const UserMenu: React.FC = () => {
     const UserCircleIcon = useColorModeValue(FaUserCircle, FaRegUserCircle)
@@ -20,7 +21,9 @@ export const UserMenu: React.FC = () => {
                 />
                 <MenuList>
                     <MenuItem>Change Password</MenuItem>
-                    <MenuItem>Sign Out</MenuItem>
+                    <Link to="/logout">
+                        <MenuItem>Log Out</MenuItem>
+                    </Link>
                 </MenuList>
             </Menu>
         </HStack>
