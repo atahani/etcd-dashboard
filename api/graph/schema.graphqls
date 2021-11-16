@@ -23,6 +23,7 @@ type Mutations {
   addUser(data: AddUserInput!): AddUserResult! @hasRole(role: ROOT)
   grantPermission(data: GrantPermissionInput!): Boolean! @hasRole(role: ROOT)
   login(username: String!, password: String!): LoginResult!
+  logout: Boolean!
   put(data: PutInput!): PutResult!
 }
 

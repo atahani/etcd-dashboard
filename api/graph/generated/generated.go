@@ -72,6 +72,7 @@ type ComplexityRoot struct {
 		GrantPermission  func(childComplexity int, data model.GrantPermissionInput) int
 		Initialize       func(childComplexity int) int
 		Login            func(childComplexity int, username string, password string) int
+		Logout           func(childComplexity int) int
 		Put              func(childComplexity int, data model.PutInput) int
 	}
 
@@ -102,6 +103,7 @@ type MutationsResolver interface {
 	AddUser(ctx context.Context, data model.AddUserInput) (*model.AddUserResult, error)
 	GrantPermission(ctx context.Context, data model.GrantPermissionInput) (bool, error)
 	Login(ctx context.Context, username string, password string) (*model.LoginResult, error)
+	Logout(ctx context.Context) (bool, error)
 	Put(ctx context.Context, data model.PutInput) (*model.PutResult, error)
 }
 type QueriesResolver interface {
@@ -248,6 +250,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutations.Login(childComplexity, args["username"].(string), args["password"].(string)), true
+
+	case "Mutations.logout":
+		if e.complexity.Mutations.Logout == nil {
+			break
+		}
+
+		return e.complexity.Mutations.Logout(childComplexity), true
 
 	case "Mutations.put":
 		if e.complexity.Mutations.Put == nil {
@@ -435,6 +444,7 @@ type Mutations {
   addUser(data: AddUserInput!): AddUserResult! @hasRole(role: ROOT)
   grantPermission(data: GrantPermissionInput!): Boolean! @hasRole(role: ROOT)
   login(username: String!, password: String!): LoginResult!
+  logout: Boolean!
   put(data: PutInput!): PutResult!
 }
 
@@ -1345,6 +1355,41 @@ func (ec *executionContext) _Mutations_login(ctx context.Context, field graphql.
 	res := resTmp.(*model.LoginResult)
 	fc.Result = res
 	return ec.marshalNLoginResult2ᚖgithubᚗcomᚋatahaniᚋetcdᚑdashboardᚋapiᚋgraphᚋmodelᚐLoginResult(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutations_logout(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutations",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutations().Logout(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutations_put(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3333,6 +3378,11 @@ func (ec *executionContext) _Mutations(ctx context.Context, sel ast.SelectionSet
 			}
 		case "login":
 			out.Values[i] = ec._Mutations_login(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "logout":
+			out.Values[i] = ec._Mutations_logout(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}

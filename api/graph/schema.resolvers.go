@@ -201,7 +201,7 @@ func (r *mutationsResolver) Login(ctx context.Context, username string, password
 		if ok, err := r.Etcd.ProcessCommonError(err); ok {
 			return nil, err
 		}
-		if strings.Contains(err.Error(), "authentication failed"){
+		if strings.Contains(err.Error(), "authentication failed") {
 			return nil, fmt.Errorf("username or password is incorrect")
 		}
 		r.Logger.WithError(err).WithFields(logrus.Fields{
@@ -246,6 +246,14 @@ func (r *mutationsResolver) Login(ctx context.Context, username string, password
 		Roles:       roles,
 		Permissions: permissions,
 	}, nil
+}
+
+func (r *mutationsResolver) Logout(ctx context.Context) (bool, error) {
+	// should remove the cookie
+	headers := ctx.Value(constant.HeaderCtxKey).(http.Header)
+	cookie := &http.Cookie{Name: constant.SessionKeyCookieName, Value: "", HttpOnly: true, Path: "/query", SameSite: http.SameSiteDefaultMode, MaxAge: -1}
+	headers.Add("Set-Cookie", cookie.String())
+	return true, nil
 }
 
 func (r *mutationsResolver) Put(ctx context.Context, data model.PutInput) (*model.PutResult, error) {
