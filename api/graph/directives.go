@@ -24,5 +24,11 @@ func MakeDirectives() generated.DirectiveRoot {
 			}
 			return nil, fmt.Errorf("access denied")
 		},
+		Authorized: func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
+			if ctx.Value(constant.UsernameCtxKey) != nil {
+				return next(ctx)
+			}
+			return nil, fmt.Errorf("access denied")
+		},
 	}
 }

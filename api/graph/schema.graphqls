@@ -8,12 +8,13 @@ enum Role {
 }
 
 directive @hasRole(role: Role!) on FIELD_DEFINITION
+directive @authorized on FIELD_DEFINITION
 
 type Queries {
   users: [String!]! @hasRole(role: ROOT)
   roles(username: String): [String!]! @hasRole(role: ROOT)
   permissions(role: String, username: String): [RolePermission!]! @hasRole(role: ROOT)
-  get(key: String!): [KeyValue!]!
+  get(key: String!): [KeyValue!]! @authorized
 }
 
 type Mutations {
@@ -25,9 +26,11 @@ type Mutations {
   addUser(data: AddUserInput!): AddUserResult! @hasRole(role: ROOT)
   deleteUser(username: String!): Boolean! @hasRole(role: ROOT)
   grantPermission(data: GrantPermissionInput!): Boolean! @hasRole(role: ROOT)
+  revokePermission(data: RevokePermissionInput!): Boolean! @hasRole(role: ROOT)
   login(username: String!, password: String!): LoginResult!
+  changePassword(data: ChangePasswordInput!): Boolean! @authorized
   logout: Boolean!
-  put(data: PutInput!): PutResult!
+  put(data: PutInput!): PutResult! @authorized
 }
 
 type KeyValue {
@@ -65,10 +68,21 @@ input GrantPermissionInput {
   write: Boolean!
 }
 
+input RevokePermissionInput {
+  role: String!
+  key: String!
+  rangeEnd: String!
+}
+
 type LoginResult {
   username: String!
   roles: [String!]!
   permissions: [RolePermission!]!
+}
+
+input ChangePasswordInput {
+  oldPassword: String!
+  password: String!
 }
 
 input PutInput {

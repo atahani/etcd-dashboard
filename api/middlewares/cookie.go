@@ -33,3 +33,14 @@ func WithCookie(jwtSignKey string) func(http.Handler) http.Handler {
 		})
 	}
 }
+
+func HasRole(ctx context.Context, role string) bool {
+	if roles, ok := ctx.Value(constant.UserRolesCtxKey).([]string); ok {
+		for _, v := range roles {
+			if v == role {
+				return true
+			}
+		}
+	}
+	return false
+}

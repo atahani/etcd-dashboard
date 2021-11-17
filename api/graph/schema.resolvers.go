@@ -243,6 +243,24 @@ func (r *mutationsResolver) GrantPermission(ctx context.Context, data model.Gran
 	return true, nil
 }
 
+func (r *mutationsResolver) RevokePermission(ctx context.Context, data model.RevokePermissionInput) (bool, error) {
+	cli, err := r.Etcd.GetClient(ctx)
+	if err != nil {
+		return false, err
+	}
+	defer cli.Close()
+	_, err = cli.Auth.RoleRevokePermission(ctx, data.Role, data.Key, data.RangeEnd)
+	if err != nil {
+		if ok, err := r.Etcd.ProcessCommonError(err); ok {
+			return false, err
+		}
+		msg := "something went wrong while revoking the %s role permission"
+		r.Logger.WithError(err).Errorf(msg, data.Role)
+		return false, fmt.Errorf(msg, data.Role)
+	}
+	return true, nil
+}
+
 func (r *mutationsResolver) Login(ctx context.Context, username string, password string) (*model.LoginResult, error) {
 	// since we need root permission to query the roles get client as ROOT
 	cli, err := r.Etcd.GetClientWithoutAuth()
@@ -300,6 +318,35 @@ func (r *mutationsResolver) Login(ctx context.Context, username string, password
 		Roles:       roles,
 		Permissions: permissions,
 	}, nil
+}
+
+func (r *mutationsResolver) ChangePassword(ctx context.Context, data model.ChangePasswordInput) (bool, error) {
+	// only root user can change the password
+	cli, err := r.Etcd.GetClientAsRoot()
+	if err != nil {
+		return false, err
+	}
+	defer cli.Close()
+	username, ok := ctx.Value(constant.UsernameCtxKey).(string)
+	if !ok {
+		return false, fmt.Errorf("the username is empty")
+	}
+	// check the old password by login
+	_, err = r.Mutations().Login(ctx, username, data.OldPassword)
+	if err != nil {
+		return false, fmt.Errorf("old password is incorrect")
+	}
+	// check the user password with ROOT client
+	_, err = cli.Auth.UserChangePassword(ctx, username, data.Password)
+	if err != nil {
+		if ok, err := r.Etcd.ProcessCommonError(err); ok {
+			return false, err
+		}
+		msg := "something went wrong while chaning the %s user password"
+		r.Logger.WithError(err).Errorf(msg, username)
+		return false, fmt.Errorf(msg, username)
+	}
+	return true, nil
 }
 
 func (r *mutationsResolver) Logout(ctx context.Context) (bool, error) {

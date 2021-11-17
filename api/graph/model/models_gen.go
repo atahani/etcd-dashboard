@@ -18,6 +18,11 @@ type AddUserResult struct {
 	Password string `json:"password"`
 }
 
+type ChangePasswordInput struct {
+	OldPassword string `json:"oldPassword"`
+	Password    string `json:"password"`
+}
+
 type GrantPermissionInput struct {
 	Role     string `json:"role"`
 	Key      string `json:"key"`
@@ -51,6 +56,12 @@ type PutInput struct {
 type PutResult struct {
 	Revision int  `json:"revision"`
 	LeaseID  *int `json:"leaseId"`
+}
+
+type RevokePermissionInput struct {
+	Role     string `json:"role"`
+	Key      string `json:"key"`
+	RangeEnd string `json:"rangeEnd"`
 }
 
 type RolePermission struct {
