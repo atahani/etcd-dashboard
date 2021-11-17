@@ -103,6 +103,24 @@ func (r *mutationsResolver) AddRole(ctx context.Context, name string) (bool, err
 	return true, nil
 }
 
+func (r *mutationsResolver) DeleteRole(ctx context.Context, name string) (bool, error) {
+	cli, err := r.Etcd.GetClient(ctx)
+	if err != nil {
+		return false, err
+	}
+	defer cli.Close()
+	_, err = cli.Auth.RoleDelete(ctx, name)
+	if err != nil {
+		if ok, err := r.Etcd.ProcessCommonError(err); ok {
+			return false, err
+		}
+		msg := "something went wrong while deleteing the %s role"
+		r.Logger.WithError(err).Errorf(msg, name)
+		return false, fmt.Errorf(msg, name)
+	}
+	return true, nil
+}
+
 func (r *mutationsResolver) AssignRoleToUser(ctx context.Context, username string, role string) (bool, error) {
 	cli, err := r.Etcd.GetClient(ctx)
 	if err != nil {
@@ -115,6 +133,24 @@ func (r *mutationsResolver) AssignRoleToUser(ctx context.Context, username strin
 			return false, err
 		}
 		msg := "something went wrong while assigning %s role to %s user"
+		r.Logger.WithError(err).Errorf(msg, role, username)
+		return false, fmt.Errorf(msg, role, username)
+	}
+	return true, nil
+}
+
+func (r *mutationsResolver) RevokeRoleFromUser(ctx context.Context, username string, role string) (bool, error) {
+	cli, err := r.Etcd.GetClient(ctx)
+	if err != nil {
+		return false, err
+	}
+	defer cli.Close()
+	_, err = cli.Auth.UserRevokeRole(ctx, username, role)
+	if err != nil {
+		if ok, err := r.Etcd.ProcessCommonError(err); ok {
+			return false, err
+		}
+		msg := "somethign went wrong while revoking %s role from %s user"
 		r.Logger.WithError(err).Errorf(msg, role, username)
 		return false, fmt.Errorf(msg, role, username)
 	}
@@ -161,6 +197,24 @@ func (r *mutationsResolver) AddUser(ctx context.Context, data model.AddUserInput
 	return &model.AddUserResult{
 		Password: password,
 	}, nil
+}
+
+func (r *mutationsResolver) DeleteUser(ctx context.Context, username string) (bool, error) {
+	cli, err := r.Etcd.GetClient(ctx)
+	if err != nil {
+		return false, err
+	}
+	defer cli.Close()
+	_, err = cli.Auth.UserDelete(ctx, username)
+	if err != nil {
+		if ok, err := r.Etcd.ProcessCommonError(err); ok {
+			return false, err
+		}
+		msg := "something went wrong while deleing the %s user"
+		r.Logger.WithError(err).Errorf(msg, username)
+		return false, fmt.Errorf(msg, username)
+	}
+	return true, nil
 }
 
 func (r *mutationsResolver) GrantPermission(ctx context.Context, data model.GrantPermissionInput) (bool, error) {

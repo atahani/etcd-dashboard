@@ -19,8 +19,11 @@ type Queries {
 type Mutations {
   initialize: InitializeResult!
   addRole(name: String!): Boolean! @hasRole(role: ROOT)
+  deleteRole(name: String!): Boolean! @hasRole(role: ROOT)
   assignRoleToUser(username: String!, role: String!): Boolean! @hasRole(role: ROOT)
+  revokeRoleFromUser(username: String!, role: String!): Boolean! @hasRole(role: ROOT)
   addUser(data: AddUserInput!): AddUserResult! @hasRole(role: ROOT)
+  deleteUser(username: String!): Boolean! @hasRole(role: ROOT)
   grantPermission(data: GrantPermissionInput!): Boolean! @hasRole(role: ROOT)
   login(username: String!, password: String!): LoginResult!
   logout: Boolean!
