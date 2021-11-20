@@ -8,6 +8,7 @@ import Home from 'containers/Home'
 import Logo from 'components/Logo'
 import Sidebar from 'components/Sidebar'
 import UserMenu from 'components/UserMenu'
+import ChangePassword from 'containers/ChangePassword'
 
 export const Dashboard: React.FC = () => {
     const { isOpen, onClose, onOpen } = useDisclosure()
@@ -29,9 +30,10 @@ export const Dashboard: React.FC = () => {
                 </HStack>
             </Flex>
             <Sidebar isOpen={isOpen} onClose={onClose} />
-            <Flex marginTop="58px" p={3} w="full">
+            <Flex marginTop="58px" p={3} w="full" ml={{ base: 0, md: 60 }}>
                 <Routes>
                     <Route path="/" element={<Home />} />
+                    <Route path="/password" element={<ChangePassword />} />
                 </Routes>
             </Flex>
         </Flex>

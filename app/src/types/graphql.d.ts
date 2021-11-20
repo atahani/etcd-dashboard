@@ -22,6 +22,11 @@ export type AddUserResult = {
     password: Scalars['String']
 }
 
+export type ChangePasswordInput = {
+    oldPassword: Scalars['String']
+    password: Scalars['String']
+}
+
 export type GrantPermissionInput = {
     key: Scalars['String']
     rangeEnd: Scalars['String']
@@ -54,10 +59,16 @@ export type Mutations = {
     addRole: Scalars['Boolean']
     addUser: AddUserResult
     assignRoleToUser: Scalars['Boolean']
+    changePassword: Scalars['Boolean']
+    deleteRole: Scalars['Boolean']
+    deleteUser: Scalars['Boolean']
     grantPermission: Scalars['Boolean']
     initialize: InitializeResult
     login: LoginResult
+    logout: Scalars['Boolean']
     put: PutResult
+    revokePermission: Scalars['Boolean']
+    revokeRoleFromUser: Scalars['Boolean']
 }
 
 export type MutationsAddRoleArgs = {
@@ -73,6 +84,18 @@ export type MutationsAssignRoleToUserArgs = {
     username: Scalars['String']
 }
 
+export type MutationsChangePasswordArgs = {
+    data: ChangePasswordInput
+}
+
+export type MutationsDeleteRoleArgs = {
+    name: Scalars['String']
+}
+
+export type MutationsDeleteUserArgs = {
+    username: Scalars['String']
+}
+
 export type MutationsGrantPermissionArgs = {
     data: GrantPermissionInput
 }
@@ -84,6 +107,15 @@ export type MutationsLoginArgs = {
 
 export type MutationsPutArgs = {
     data: PutInput
+}
+
+export type MutationsRevokePermissionArgs = {
+    data: RevokePermissionInput
+}
+
+export type MutationsRevokeRoleFromUserArgs = {
+    role: Scalars['String']
+    username: Scalars['String']
 }
 
 export type PutInput = {
@@ -117,6 +149,12 @@ export type QueriesPermissionsArgs = {
 
 export type QueriesRolesArgs = {
     username?: Maybe<Scalars['String']>
+}
+
+export type RevokePermissionInput = {
+    key: Scalars['String']
+    rangeEnd: Scalars['String']
+    role: Scalars['String']
 }
 
 export enum Role {

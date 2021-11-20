@@ -1,9 +1,9 @@
 import { FaRegUserCircle, FaUserCircle } from 'react-icons/fa'
 import { HStack, Text, IconButton, useColorModeValue, Menu, MenuButton, MenuList, MenuItem } from '@chakra-ui/react'
+import { Link } from 'react-router-dom'
 import React from 'react'
 
 import { getUsername } from 'utils/persistData'
-import { Link } from 'react-router-dom'
 
 export const UserMenu: React.FC = () => {
     const UserCircleIcon = useColorModeValue(FaUserCircle, FaRegUserCircle)
@@ -20,7 +20,9 @@ export const UserMenu: React.FC = () => {
                     icon={<UserCircleIcon />}
                 />
                 <MenuList>
-                    <MenuItem>Change Password</MenuItem>
+                    <Link to="/password">
+                        <MenuItem>Change Password</MenuItem>
+                    </Link>
                     <Link to="/logout">
                         <MenuItem>Log Out</MenuItem>
                     </Link>

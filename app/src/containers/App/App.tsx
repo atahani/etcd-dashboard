@@ -15,7 +15,7 @@ export const App: React.FC = () => (
                     <Route path="/login" element={<Login />} />
                     <Route path="/logout" element={<Logout />} />
                     <Route
-                        path="/"
+                        path="*"
                         element={
                             <PrivateRoute>
                                 <Dashboard />
