@@ -37,6 +37,9 @@ export const SidebarContent: React.FC<ContentProps> = ({ onClose, ...rest }: Con
             <NavLinkItem to="/users" icon={FaUsers}>
                 User Management
             </NavLinkItem>
+            <NavLinkItem to="/roles" icon={FaShieldAlt}>
+                Role Management
+            </NavLinkItem>
         </Box>
     )
 }

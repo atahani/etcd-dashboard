@@ -3,37 +3,51 @@ import { HStack, Flex, Spacer, IconButton, useDisclosure } from '@chakra-ui/reac
 import { Route, Routes } from 'react-router'
 import React from 'react'
 
+import { getUserRoles } from 'utils/persistData'
+import ChangePassword from 'containers/ChangePassword'
 import ColorModeSwitcher from 'components/ColorModeSwitcher'
 import Home from 'containers/Home'
 import Logo from 'components/Logo'
+import NotFound from 'containers/NotFound'
+import Permissions from 'containers/Permissions'
+import Roles from 'containers/Roles'
 import Sidebar from 'components/Sidebar'
+import Tags from 'containers/Tags'
 import UserMenu from 'components/UserMenu'
-import ChangePassword from 'containers/ChangePassword'
+import Users from 'containers/Users'
 
 export const Dashboard: React.FC = () => {
     const { isOpen, onClose, onOpen } = useDisclosure()
+    const hasRootRole = getUserRoles().includes('root')
     return (
         <Flex>
             <Flex p={3} pos="fixed" w="full" justifyContent="space-between">
-                <IconButton
-                    display={{ base: 'flex', md: 'none' }}
-                    onClick={onOpen}
-                    variant="ghost"
-                    aria-label="open menu"
-                    icon={<FaBars />}
-                />
-                <Logo display={{ base: 'flex', md: 'none' }} />
+                {hasRootRole && (
+                    <IconButton
+                        display={{ base: 'flex', md: 'none' }}
+                        onClick={onOpen}
+                        variant="ghost"
+                        aria-label="open menu"
+                        icon={<FaBars />}
+                    />
+                )}
+                <Logo display={{ base: 'flex', md: hasRootRole ? 'none' : 'flex' }} />
                 <Spacer display={{ base: 'none', md: 'flex' }} />
                 <HStack justifySelf="flex-end" direction="column" spacing="2">
                     <UserMenu />
                     <ColorModeSwitcher />
                 </HStack>
             </Flex>
-            <Sidebar isOpen={isOpen} onClose={onClose} />
-            <Flex marginTop="58px" p={3} w="full" ml={{ base: 0, md: 60 }}>
+            {hasRootRole && <Sidebar isOpen={isOpen} onClose={onClose} />}
+            <Flex marginTop="58px" p={3} w="full" ml={hasRootRole ? { base: 0, md: 60 } : {}}>
                 <Routes>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/password" element={<ChangePassword />} />
+                    <Route path="" element={<Home />} />
+                    <Route path="password" element={<ChangePassword />} />
+                    {hasRootRole && <Route path="roles" element={<Roles />} />}
+                    {hasRootRole && <Route path="users" element={<Users />} />}
+                    {hasRootRole && <Route path="permissions" element={<Permissions />} />}
+                    {hasRootRole && <Route path="tags" element={<Tags />} />}
+                    <Route path="*" element={<NotFound />} />
                 </Routes>
             </Flex>
         </Flex>
