@@ -30,6 +30,12 @@ export const handleCommonErr = ({ error, toast, handleMore }: HandleCommonErr): 
             toast({ description: messages.internalServer, status: 'error', isClosable: true })
         }
     }
+    if (error?.message === 'access denied') {
+        // the token has been expired, needs to re authenticate
+        clearLocalStorage()
+        window.location.href = '/login'
+        return
+    }
     if (error.networkError && error.networkError?.message === 'Failed to fetch') {
         // check is user online
         const isOnline = typeof navigator.onLine === 'boolean' ? navigator.onLine : true

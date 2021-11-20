@@ -24,5 +24,8 @@ export const getUserRolePermissions = (): RolePermission[] => {
 }
 
 export const clearLocalStorage = (): void => {
-    localStorage.clear()
+    localStorage.removeItem(IS_LOGGED_IN)
+    localStorage.removeItem(USERNAME)
+    localStorage.removeItem(ROLES)
+    localStorage.removeItem(PERMISSIONS)
 }
