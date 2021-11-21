@@ -67,6 +67,7 @@ export type Mutations = {
     login: LoginResult
     logout: Scalars['Boolean']
     put: PutResult
+    resetPassword: Scalars['String']
     revokePermission: Scalars['Boolean']
     revokeRoleFromUser: Scalars['Boolean']
 }
@@ -109,6 +110,10 @@ export type MutationsPutArgs = {
     data: PutInput
 }
 
+export type MutationsResetPasswordArgs = {
+    username: Scalars['String']
+}
+
 export type MutationsRevokePermissionArgs = {
     data: RevokePermissionInput
 }
@@ -135,7 +140,7 @@ export type Queries = {
     get: Array<KeyValue>
     permissions: Array<RolePermission>
     roles: Array<Scalars['String']>
-    users: Array<Scalars['String']>
+    users: Array<User>
 }
 
 export type QueriesGetArgs = {
@@ -167,4 +172,10 @@ export type RolePermission = {
     rangeEnd: Scalars['String']
     read: Scalars['Boolean']
     write: Scalars['Boolean']
+}
+
+export type User = {
+    __typename?: 'User'
+    roles: Array<Scalars['String']>
+    username: Scalars['String']
 }

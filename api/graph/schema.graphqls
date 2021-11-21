@@ -11,7 +11,7 @@ directive @hasRole(role: Role!) on FIELD_DEFINITION
 directive @authorized on FIELD_DEFINITION
 
 type Queries {
-  users: [String!]! @hasRole(role: ROOT)
+  users: [User!]! @hasRole(role: ROOT)
   roles(username: String): [String!]! @hasRole(role: ROOT)
   permissions(role: String, username: String): [RolePermission!]! @hasRole(role: ROOT)
   get(key: String!): [KeyValue!]! @authorized
@@ -25,12 +25,18 @@ type Mutations {
   revokeRoleFromUser(username: String!, role: String!): Boolean! @hasRole(role: ROOT)
   addUser(data: AddUserInput!): AddUserResult! @hasRole(role: ROOT)
   deleteUser(username: String!): Boolean! @hasRole(role: ROOT)
+  resetPassword(username: String!): String! @hasRole(role: ROOT)
   grantPermission(data: GrantPermissionInput!): Boolean! @hasRole(role: ROOT)
   revokePermission(data: RevokePermissionInput!): Boolean! @hasRole(role: ROOT)
   login(username: String!, password: String!): LoginResult!
   changePassword(data: ChangePasswordInput!): Boolean! @authorized
   logout: Boolean!
   put(data: PutInput!): PutResult! @authorized
+}
+
+type User {
+  username: String!
+  roles: [String!]!
 }
 
 type KeyValue {

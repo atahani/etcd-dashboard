@@ -71,6 +71,11 @@ type RolePermission struct {
 	Write    bool   `json:"write"`
 }
 
+type User struct {
+	Username string   `json:"username"`
+	Roles    []string `json:"roles"`
+}
+
 type Role string
 
 const (

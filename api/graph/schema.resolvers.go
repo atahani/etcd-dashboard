@@ -217,6 +217,30 @@ func (r *mutationsResolver) DeleteUser(ctx context.Context, username string) (bo
 	return true, nil
 }
 
+func (r *mutationsResolver) ResetPassword(ctx context.Context, username string) (string, error) {
+	password, err := genPass.Generate(16, 5, 2, false, false)
+	if err != nil {
+		msg := fmt.Sprintf("something went wrong while generating the passsword for %s user", username)
+		r.Logger.WithError(err).Errorf(msg)
+		return "", fmt.Errorf(msg)
+	}
+	cli, err := r.Etcd.GetClient(ctx)
+	if err != nil {
+		return "", err
+	}
+	defer cli.Close()
+	_, err = cli.Auth.UserChangePassword(ctx, username, password)
+	if err != nil {
+		if ok, err := r.Etcd.ProcessCommonError(err); ok {
+			return "", err
+		}
+		msg := "something went wrong while reseting the %s user password"
+		r.Logger.WithError(err).Errorf(msg, username)
+		return "", fmt.Errorf(msg, username)
+	}
+	return password, nil
+}
+
 func (r *mutationsResolver) GrantPermission(ctx context.Context, data model.GrantPermissionInput) (bool, error) {
 	cli, err := r.Etcd.GetClient(ctx)
 	if err != nil {
@@ -404,7 +428,7 @@ func (r *mutationsResolver) Put(ctx context.Context, data model.PutInput) (*mode
 	}, nil
 }
 
-func (r *queriesResolver) Users(ctx context.Context) ([]string, error) {
+func (r *queriesResolver) Users(ctx context.Context) ([]*model.User, error) {
 	cli, err := r.Etcd.GetClient(ctx)
 	if err != nil {
 		return nil, err
@@ -419,7 +443,18 @@ func (r *queriesResolver) Users(ctx context.Context) ([]string, error) {
 		r.Logger.WithError(err).Error(msg)
 		return nil, fmt.Errorf(msg)
 	}
-	return res.Users, nil
+	result := make([]*model.User, len(res.Users))
+	for i, v := range res.Users {
+		roles, err := r.Queries().Roles(ctx, &v)
+		if err != nil {
+			return nil, err
+		}
+		result[i] = &model.User{
+			Username: v,
+			Roles:    roles,
+		}
+	}
+	return result, nil
 }
 
 func (r *queriesResolver) Roles(ctx context.Context, username *string) ([]string, error) {
