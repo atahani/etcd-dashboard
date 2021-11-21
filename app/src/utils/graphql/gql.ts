@@ -55,12 +55,21 @@ export const ADD_USER = gql`
 
 export const GET_USERS = gql`
     query Users {
-        users
+        users {
+            username
+            roles
+        }
     }
 `
 
 export const DELETE_USER = gql`
     mutation DeleteUser($username: String!) {
         deleteUser(username: $username)
+    }
+`
+
+export const RESET_USER_PASSWORD = gql`
+    mutation ResetUserPassword($username: String!) {
+        resetPassword(username: $username)
     }
 `
