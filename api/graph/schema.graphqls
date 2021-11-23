@@ -23,6 +23,7 @@ type Mutations {
   deleteRole(name: String!): Boolean! @hasRole(role: ROOT)
   assignRoleToUser(username: String!, role: String!): Boolean! @hasRole(role: ROOT)
   revokeRoleFromUser(username: String!, role: String!): Boolean! @hasRole(role: ROOT)
+  changeUserRoles(username: String!, roles: [String!]!): Boolean! @hasRole(role: ROOT)
   addUser(data: AddUserInput!): AddUserResult! @hasRole(role: ROOT)
   deleteUser(username: String!): Boolean! @hasRole(role: ROOT)
   resetPassword(username: String!): String! @hasRole(role: ROOT)

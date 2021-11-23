@@ -71,6 +71,7 @@ type ComplexityRoot struct {
 		AddUser            func(childComplexity int, data model.AddUserInput) int
 		AssignRoleToUser   func(childComplexity int, username string, role string) int
 		ChangePassword     func(childComplexity int, data model.ChangePasswordInput) int
+		ChangeUserRoles    func(childComplexity int, username string, roles []string) int
 		DeleteRole         func(childComplexity int, name string) int
 		DeleteUser         func(childComplexity int, username string) int
 		GrantPermission    func(childComplexity int, data model.GrantPermissionInput) int
@@ -114,6 +115,7 @@ type MutationsResolver interface {
 	DeleteRole(ctx context.Context, name string) (bool, error)
 	AssignRoleToUser(ctx context.Context, username string, role string) (bool, error)
 	RevokeRoleFromUser(ctx context.Context, username string, role string) (bool, error)
+	ChangeUserRoles(ctx context.Context, username string, roles []string) (bool, error)
 	AddUser(ctx context.Context, data model.AddUserInput) (*model.AddUserResult, error)
 	DeleteUser(ctx context.Context, username string) (bool, error)
 	ResetPassword(ctx context.Context, username string) (string, error)
@@ -249,6 +251,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutations.ChangePassword(childComplexity, args["data"].(model.ChangePasswordInput)), true
+
+	case "Mutations.changeUserRoles":
+		if e.complexity.Mutations.ChangeUserRoles == nil {
+			break
+		}
+
+		args, err := ec.field_Mutations_changeUserRoles_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutations.ChangeUserRoles(childComplexity, args["username"].(string), args["roles"].([]string)), true
 
 	case "Mutations.deleteRole":
 		if e.complexity.Mutations.DeleteRole == nil {
@@ -548,6 +562,7 @@ type Mutations {
   deleteRole(name: String!): Boolean! @hasRole(role: ROOT)
   assignRoleToUser(username: String!, role: String!): Boolean! @hasRole(role: ROOT)
   revokeRoleFromUser(username: String!, role: String!): Boolean! @hasRole(role: ROOT)
+  changeUserRoles(username: String!, roles: [String!]!): Boolean! @hasRole(role: ROOT)
   addUser(data: AddUserInput!): AddUserResult! @hasRole(role: ROOT)
   deleteUser(username: String!): Boolean! @hasRole(role: ROOT)
   resetPassword(username: String!): String! @hasRole(role: ROOT)
@@ -714,6 +729,30 @@ func (ec *executionContext) field_Mutations_changePassword_args(ctx context.Cont
 		}
 	}
 	args["data"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutations_changeUserRoles_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["username"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["username"] = arg0
+	var arg1 []string
+	if tmp, ok := rawArgs["roles"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("roles"))
+		arg1, err = ec.unmarshalNString2ᚕstringᚄ(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["roles"] = arg1
 	return args, nil
 }
 
@@ -1502,6 +1541,72 @@ func (ec *executionContext) _Mutations_revokeRoleFromUser(ctx context.Context, f
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutations().RevokeRoleFromUser(rctx, args["username"].(string), args["role"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			role, err := ec.unmarshalNRole2githubᚗcomᚋatahaniᚋetcdᚑdashboardᚋapiᚋgraphᚋmodelᚐRole(ctx, "ROOT")
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.HasRole == nil {
+				return nil, errors.New("directive hasRole is not implemented")
+			}
+			return ec.directives.HasRole(ctx, nil, directive0, role)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutations_changeUserRoles(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutations",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutations_changeUserRoles_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutations().ChangeUserRoles(rctx, args["username"].(string), args["roles"].([]string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			role, err := ec.unmarshalNRole2githubᚗcomᚋatahaniᚋetcdᚑdashboardᚋapiᚋgraphᚋmodelᚐRole(ctx, "ROOT")
@@ -4171,6 +4276,11 @@ func (ec *executionContext) _Mutations(ctx context.Context, sel ast.SelectionSet
 			}
 		case "revokeRoleFromUser":
 			out.Values[i] = ec._Mutations_revokeRoleFromUser(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "changeUserRoles":
+			out.Values[i] = ec._Mutations_changeUserRoles(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}

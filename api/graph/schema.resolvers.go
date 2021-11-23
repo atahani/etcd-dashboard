@@ -14,6 +14,7 @@ import (
 	"github.com/atahani/etcd-dashboard/api/data"
 	"github.com/atahani/etcd-dashboard/api/graph/generated"
 	"github.com/atahani/etcd-dashboard/api/graph/model"
+	"github.com/atahani/etcd-dashboard/api/utils"
 	jwt "github.com/dgrijalva/jwt-go"
 	genPass "github.com/sethvargo/go-password/password"
 	"github.com/sirupsen/logrus"
@@ -153,6 +154,36 @@ func (r *mutationsResolver) RevokeRoleFromUser(ctx context.Context, username str
 		msg := "somethign went wrong while revoking %s role from %s user"
 		r.Logger.WithError(err).Errorf(msg, role, username)
 		return false, fmt.Errorf(msg, role, username)
+	}
+	return true, nil
+}
+
+func (r *mutationsResolver) ChangeUserRoles(ctx context.Context, username string, roles []string) (bool, error) {
+	cli, err := r.Etcd.GetClient(ctx)
+	if err != nil {
+		return false, err
+	}
+	defer cli.Close()
+	// get the current roles of user
+	currentRoles, err := r.Queries().Roles(ctx, &username)
+	if err != nil {
+		return false, err
+	}
+	// compare the currentRoles with roles which we need to update
+	diff := utils.DifferenceStrSlice(currentRoles, roles)
+	for _, d := range diff {
+		// if include on current roles should be revoke
+		if utils.ContainsStrInSlice(currentRoles, d) {
+			_, err := r.Mutations().RevokeRoleFromUser(ctx, username, d)
+			if err != nil {
+				return false, err
+			}
+		} else {
+			_, err := r.Mutations().AssignRoleToUser(ctx, username, d)
+			if err != nil {
+				return false, err
+			}
+		}
 	}
 	return true, nil
 }
