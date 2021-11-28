@@ -60,6 +60,7 @@ export type Mutations = {
     addUser: AddUserResult
     assignRoleToUser: Scalars['Boolean']
     changePassword: Scalars['Boolean']
+    changeUserRoles: Scalars['Boolean']
     deleteRole: Scalars['Boolean']
     deleteUser: Scalars['Boolean']
     grantPermission: Scalars['Boolean']
@@ -87,6 +88,11 @@ export type MutationsAssignRoleToUserArgs = {
 
 export type MutationsChangePasswordArgs = {
     data: ChangePasswordInput
+}
+
+export type MutationsChangeUserRolesArgs = {
+    roles: Array<Scalars['String']>
+    username: Scalars['String']
 }
 
 export type MutationsDeleteRoleArgs = {

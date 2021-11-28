@@ -73,3 +73,9 @@ export const RESET_USER_PASSWORD = gql`
         resetPassword(username: $username)
     }
 `
+
+export const CHANGE_USER_ROLES = gql`
+    mutation ChangeUserRoles($username: String!, $roles: [String!]!) {
+        changeUserRoles(username: $username, roles: $roles)
+    }
+`
