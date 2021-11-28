@@ -79,3 +79,9 @@ export const CHANGE_USER_ROLES = gql`
         changeUserRoles(username: $username, roles: $roles)
     }
 `
+
+export const GRANT_PERMISSION = gql`
+    mutation GrantPermission($data: GrantPermissionInput!) {
+        grantPermission(data: $data)
+    }
+`

@@ -7,6 +7,7 @@ import { getUserRoles } from 'utils/persistData'
 import AddUser from 'containers/AddUser'
 import ChangePassword from 'containers/ChangePassword'
 import ColorModeSwitcher from 'components/ColorModeSwitcher'
+import GrantPermission from 'containers/GrantPermission'
 import Home from 'containers/Home'
 import Logo from 'components/Logo'
 import NotFound from 'containers/NotFound'
@@ -47,6 +48,7 @@ export const Dashboard: React.FC = () => {
                     {hasRootRole && <Route path="roles" element={<Roles />} />}
                     {hasRootRole && <Route path="users/add" element={<AddUser />} />}
                     {hasRootRole && <Route path="users" element={<Users />} />}
+                    {hasRootRole && <Route path="permissions/grant" element={<GrantPermission />} />}
                     {hasRootRole && <Route path="permissions" element={<Permissions />} />}
                     {hasRootRole && <Route path="tags" element={<Tags />} />}
                     <Route path="*" element={<NotFound />} />
