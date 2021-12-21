@@ -5,6 +5,7 @@ package graph
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -316,6 +317,94 @@ func (r *mutationsResolver) RevokePermission(ctx context.Context, data model.Rev
 	return true, nil
 }
 
+func (r *mutationsResolver) AddTag(ctx context.Context, data model.TagInput) (bool, error) {
+	// the key should be one single word without space
+	if len(strings.Fields(data.Key)) > 1 {
+		return false, fmt.Errorf("the key should be single word, without any space")
+	}
+	cli, err := r.Etcd.GetClient(ctx)
+	if err != nil {
+		return false, err
+	}
+	defer cli.Close()
+	// get tags
+	tags, err := r.Queries().Tags(ctx, data.Type)
+	if err != nil {
+		return false, err
+	}
+	// check do we already have any tags with this name
+	key := strings.ToLower(data.Key)
+	for _, t := range tags {
+		if t.Key == key {
+			return false, fmt.Errorf("we already have tag with this key=%s", key)
+		}
+	}
+	tags = append(tags, &model.Tag{
+		Key:  key,
+		Name: data.Name,
+	})
+	// marshal the tags into JSON
+	json, err := json.Marshal(tags)
+	if err != nil {
+		msg := "something went wrong while marshaling the tags"
+		r.Logger.WithError(err).Error(msg)
+		return false, fmt.Errorf(msg)
+	}
+	tagsKey := fmt.Sprintf("%s_%s", data.Type.String(), constant.TagsKey)
+	_, err = r.Mutations().Put(ctx, model.PutInput{
+		Key:   tagsKey,
+		Value: string(json),
+	})
+	if err != nil {
+		msg := "something went wrong while puting the tags"
+		r.Logger.WithError(err).Error(msg)
+		return false, fmt.Errorf(msg)
+	}
+	return true, nil
+}
+
+func (r *mutationsResolver) DeleteTag(ctx context.Context, key string, typeArg model.TagType) (bool, error) {
+	cli, err := r.Etcd.GetClient(ctx)
+	if err != nil {
+		return false, err
+	}
+	defer cli.Close()
+	// get tags
+	tags, err := r.Queries().Tags(ctx, typeArg)
+	if err != nil {
+		return false, err
+	}
+	key = strings.ToLower(key)
+	newTags := []*model.Tag{}
+	for _, t := range tags {
+		// exclude it from tags
+		if t.Key != key {
+			newTags = append(newTags, t)
+		}
+	}
+	if len(tags) == len(newTags) {
+		return false, fmt.Errorf("there is no tag with this key=%s", key)
+	}
+	// marshal the newTags into JSON
+	json, err := json.Marshal(newTags)
+	if err != nil {
+		msg := "something went wrong while marshaling the tags"
+		r.Logger.WithError(err).Error(msg)
+		return false, fmt.Errorf(msg)
+	}
+	tagsKey := fmt.Sprintf("%s_%s", typeArg.String(), constant.TagsKey)
+	_, err = r.Mutations().Put(ctx, model.PutInput{
+		Key:   tagsKey,
+		Value: string(json),
+	})
+	if err != nil {
+		msg := "something went wrong while puting the tags"
+		r.Logger.WithError(err).Error(msg)
+		return false, fmt.Errorf(msg)
+	}
+	return true, nil
+}
+
 func (r *mutationsResolver) Login(ctx context.Context, username string, password string) (*model.LoginResult, error) {
 	// since we need root permission to query the roles get client as ROOT
 	cli, err := r.Etcd.GetClientWithoutAuth()
@@ -568,6 +657,34 @@ func (r *queriesResolver) Permissions(ctx context.Context, role *string, usernam
 		return results, nil
 	}
 	return nil, fmt.Errorf("should pass at least one of the role or username")
+}
+
+func (r *queriesResolver) Tags(ctx context.Context, typeArg model.TagType) ([]*model.Tag, error) {
+	cli, err := r.Etcd.GetClient(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer cli.Close()
+	tagsKey := fmt.Sprintf("%s_%s", typeArg.String(), constant.TagsKey)
+	res, err := cli.Get(ctx, tagsKey)
+	if err != nil {
+		if ok, err := r.Etcd.ProcessCommonError(err); ok {
+			return nil, err
+		}
+		r.Logger.WithError(err).Error("while getting the tagsKey")
+		return nil, err
+	}
+	result := []*model.Tag{}
+	if res.Count == 1 {
+		// unmarshal the etcd key value
+		err := json.Unmarshal(res.Kvs[0].Value, &result)
+		if err != nil {
+			msg := "something went wrong while decode tags json"
+			r.Logger.WithError(err).Error(msg)
+			return nil, fmt.Errorf(msg)
+		}
+	}
+	return result, nil
 }
 
 func (r *queriesResolver) Get(ctx context.Context, key string) ([]*model.KeyValue, error) {

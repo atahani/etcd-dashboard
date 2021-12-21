@@ -71,6 +71,17 @@ type RolePermission struct {
 	Write    bool   `json:"write"`
 }
 
+type Tag struct {
+	Key  string `json:"key"`
+	Name string `json:"name"`
+}
+
+type TagInput struct {
+	Key  string  `json:"key"`
+	Name string  `json:"name"`
+	Type TagType `json:"type"`
+}
+
 type User struct {
 	Username string   `json:"username"`
 	Roles    []string `json:"roles"`
@@ -112,5 +123,46 @@ func (e *Role) UnmarshalGQL(v interface{}) error {
 }
 
 func (e Role) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type TagType string
+
+const (
+	TagTypePrefix  TagType = "PREFIX"
+	TagTypePostfix TagType = "POSTFIX"
+)
+
+var AllTagType = []TagType{
+	TagTypePrefix,
+	TagTypePostfix,
+}
+
+func (e TagType) IsValid() bool {
+	switch e {
+	case TagTypePrefix, TagTypePostfix:
+		return true
+	}
+	return false
+}
+
+func (e TagType) String() string {
+	return string(e)
+}
+
+func (e *TagType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = TagType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid TagType", str)
+	}
+	return nil
+}
+
+func (e TagType) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }

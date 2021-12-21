@@ -10,3 +10,5 @@ var SessionKeyCookieName = "session"
 type contextKey struct {
 	name string
 }
+
+var TagsKey = "tags"

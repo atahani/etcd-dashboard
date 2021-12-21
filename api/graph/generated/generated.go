@@ -68,11 +68,13 @@ type ComplexityRoot struct {
 
 	Mutations struct {
 		AddRole            func(childComplexity int, name string) int
+		AddTag             func(childComplexity int, data model.TagInput) int
 		AddUser            func(childComplexity int, data model.AddUserInput) int
 		AssignRoleToUser   func(childComplexity int, username string, role string) int
 		ChangePassword     func(childComplexity int, data model.ChangePasswordInput) int
 		ChangeUserRoles    func(childComplexity int, username string, roles []string) int
 		DeleteRole         func(childComplexity int, name string) int
+		DeleteTag          func(childComplexity int, key string, typeArg model.TagType) int
 		DeleteUser         func(childComplexity int, username string) int
 		GrantPermission    func(childComplexity int, data model.GrantPermissionInput) int
 		Initialize         func(childComplexity int) int
@@ -93,6 +95,7 @@ type ComplexityRoot struct {
 		Get         func(childComplexity int, key string) int
 		Permissions func(childComplexity int, role *string, username *string) int
 		Roles       func(childComplexity int, username *string) int
+		Tags        func(childComplexity int, typeArg model.TagType) int
 		Users       func(childComplexity int) int
 	}
 
@@ -101,6 +104,11 @@ type ComplexityRoot struct {
 		RangeEnd func(childComplexity int) int
 		Read     func(childComplexity int) int
 		Write    func(childComplexity int) int
+	}
+
+	Tag struct {
+		Key  func(childComplexity int) int
+		Name func(childComplexity int) int
 	}
 
 	User struct {
@@ -121,6 +129,8 @@ type MutationsResolver interface {
 	ResetPassword(ctx context.Context, username string) (string, error)
 	GrantPermission(ctx context.Context, data model.GrantPermissionInput) (bool, error)
 	RevokePermission(ctx context.Context, data model.RevokePermissionInput) (bool, error)
+	AddTag(ctx context.Context, data model.TagInput) (bool, error)
+	DeleteTag(ctx context.Context, key string, typeArg model.TagType) (bool, error)
 	Login(ctx context.Context, username string, password string) (*model.LoginResult, error)
 	ChangePassword(ctx context.Context, data model.ChangePasswordInput) (bool, error)
 	Logout(ctx context.Context) (bool, error)
@@ -130,6 +140,7 @@ type QueriesResolver interface {
 	Users(ctx context.Context) ([]*model.User, error)
 	Roles(ctx context.Context, username *string) ([]string, error)
 	Permissions(ctx context.Context, role *string, username *string) ([]*model.RolePermission, error)
+	Tags(ctx context.Context, typeArg model.TagType) ([]*model.Tag, error)
 	Get(ctx context.Context, key string) ([]*model.KeyValue, error)
 }
 
@@ -216,6 +227,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutations.AddRole(childComplexity, args["name"].(string)), true
 
+	case "Mutations.addTag":
+		if e.complexity.Mutations.AddTag == nil {
+			break
+		}
+
+		args, err := ec.field_Mutations_addTag_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutations.AddTag(childComplexity, args["data"].(model.TagInput)), true
+
 	case "Mutations.addUser":
 		if e.complexity.Mutations.AddUser == nil {
 			break
@@ -275,6 +298,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutations.DeleteRole(childComplexity, args["name"].(string)), true
+
+	case "Mutations.deleteTag":
+		if e.complexity.Mutations.DeleteTag == nil {
+			break
+		}
+
+		args, err := ec.field_Mutations_deleteTag_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutations.DeleteTag(childComplexity, args["key"].(string), args["type"].(model.TagType)), true
 
 	case "Mutations.deleteUser":
 		if e.complexity.Mutations.DeleteUser == nil {
@@ -424,6 +459,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Queries.Roles(childComplexity, args["username"].(*string)), true
 
+	case "Queries.tags":
+		if e.complexity.Queries.Tags == nil {
+			break
+		}
+
+		args, err := ec.field_Queries_tags_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Queries.Tags(childComplexity, args["type"].(model.TagType)), true
+
 	case "Queries.users":
 		if e.complexity.Queries.Users == nil {
 			break
@@ -458,6 +505,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.RolePermission.Write(childComplexity), true
+
+	case "Tag.key":
+		if e.complexity.Tag.Key == nil {
+			break
+		}
+
+		return e.complexity.Tag.Key(childComplexity), true
+
+	case "Tag.name":
+		if e.complexity.Tag.Name == nil {
+			break
+		}
+
+		return e.complexity.Tag.Name(childComplexity), true
 
 	case "User.roles":
 		if e.complexity.User.Roles == nil {
@@ -546,6 +607,11 @@ enum Role {
   ROOT
 }
 
+enum TagType {
+  PREFIX
+  POSTFIX
+}
+
 directive @hasRole(role: Role!) on FIELD_DEFINITION
 directive @authorized on FIELD_DEFINITION
 
@@ -553,6 +619,7 @@ type Queries {
   users: [User!]! @hasRole(role: ROOT)
   roles(username: String): [String!]! @hasRole(role: ROOT)
   permissions(role: String, username: String): [RolePermission!]! @hasRole(role: ROOT)
+  tags(type: TagType!): [Tag!]!
   get(key: String!): [KeyValue!]! @authorized
 }
 
@@ -568,6 +635,8 @@ type Mutations {
   resetPassword(username: String!): String! @hasRole(role: ROOT)
   grantPermission(data: GrantPermissionInput!): Boolean! @hasRole(role: ROOT)
   revokePermission(data: RevokePermissionInput!): Boolean! @hasRole(role: ROOT)
+  addTag(data: TagInput!): Boolean! @hasRole(role: ROOT)
+  deleteTag(key: String!, type: TagType!): Boolean! @hasRole(role: ROOT)
   login(username: String!, password: String!): LoginResult!
   changePassword(data: ChangePasswordInput!): Boolean! @authorized
   logout: Boolean!
@@ -640,7 +709,19 @@ input PutInput {
 type PutResult {
   revision: Int!
   leaseId: Int
-}`, BuiltIn: false},
+}
+
+type Tag {
+  key: String!
+  name: String!
+}
+
+input TagInput {
+  key: String!
+  name: String!
+  type: TagType!
+}
+`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
@@ -675,6 +756,21 @@ func (ec *executionContext) field_Mutations_addRole_args(ctx context.Context, ra
 		}
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutations_addTag_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.TagInput
+	if tmp, ok := rawArgs["data"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("data"))
+		arg0, err = ec.unmarshalNTagInput2githubᚗcomᚋatahaniᚋetcdᚑdashboardᚋapiᚋgraphᚋmodelᚐTagInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["data"] = arg0
 	return args, nil
 }
 
@@ -768,6 +864,30 @@ func (ec *executionContext) field_Mutations_deleteRole_args(ctx context.Context,
 		}
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutations_deleteTag_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["key"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("key"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["key"] = arg0
+	var arg1 model.TagType
+	if tmp, ok := rawArgs["type"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+		arg1, err = ec.unmarshalNTagType2githubᚗcomᚋatahaniᚋetcdᚑdashboardᚋapiᚋgraphᚋmodelᚐTagType(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["type"] = arg1
 	return args, nil
 }
 
@@ -960,6 +1080,21 @@ func (ec *executionContext) field_Queries_roles_args(ctx context.Context, rawArg
 		}
 	}
 	args["username"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Queries_tags_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.TagType
+	if tmp, ok := rawArgs["type"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+		arg0, err = ec.unmarshalNTagType2githubᚗcomᚋatahaniᚋetcdᚑdashboardᚋapiᚋgraphᚋmodelᚐTagType(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["type"] = arg0
 	return args, nil
 }
 
@@ -1976,6 +2111,138 @@ func (ec *executionContext) _Mutations_revokePermission(ctx context.Context, fie
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Mutations_addTag(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutations",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutations_addTag_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutations().AddTag(rctx, args["data"].(model.TagInput))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			role, err := ec.unmarshalNRole2githubᚗcomᚋatahaniᚋetcdᚑdashboardᚋapiᚋgraphᚋmodelᚐRole(ctx, "ROOT")
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.HasRole == nil {
+				return nil, errors.New("directive hasRole is not implemented")
+			}
+			return ec.directives.HasRole(ctx, nil, directive0, role)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutations_deleteTag(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutations",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutations_deleteTag_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutations().DeleteTag(rctx, args["key"].(string), args["type"].(model.TagType))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			role, err := ec.unmarshalNRole2githubᚗcomᚋatahaniᚋetcdᚑdashboardᚋapiᚋgraphᚋmodelᚐRole(ctx, "ROOT")
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.HasRole == nil {
+				return nil, errors.New("directive hasRole is not implemented")
+			}
+			return ec.directives.HasRole(ctx, nil, directive0, role)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Mutations_login(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -2435,6 +2702,48 @@ func (ec *executionContext) _Queries_permissions(ctx context.Context, field grap
 	return ec.marshalNRolePermission2ᚕᚖgithubᚗcomᚋatahaniᚋetcdᚑdashboardᚋapiᚋgraphᚋmodelᚐRolePermissionᚄ(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Queries_tags(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Queries",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Queries_tags_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Queries().Tags(rctx, args["type"].(model.TagType))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Tag)
+	fc.Result = res
+	return ec.marshalNTag2ᚕᚖgithubᚗcomᚋatahaniᚋetcdᚑdashboardᚋapiᚋgraphᚋmodelᚐTagᚄ(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Queries_get(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -2706,6 +3015,76 @@ func (ec *executionContext) _RolePermission_write(ctx context.Context, field gra
 	res := resTmp.(bool)
 	fc.Result = res
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Tag_key(ctx context.Context, field graphql.CollectedField, obj *model.Tag) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Tag",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Key, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Tag_name(ctx context.Context, field graphql.CollectedField, obj *model.Tag) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Tag",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _User_username(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
@@ -4103,6 +4482,45 @@ func (ec *executionContext) unmarshalInputRevokePermissionInput(ctx context.Cont
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputTagInput(ctx context.Context, obj interface{}) (model.TagInput, error) {
+	var it model.TagInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "key":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("key"))
+			it.Key, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "type":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+			it.Type, err = ec.unmarshalNTagType2githubᚗcomᚋatahaniᚋetcdᚑdashboardᚋapiᚋgraphᚋmodelᚐTagType(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -4309,6 +4727,16 @@ func (ec *executionContext) _Mutations(ctx context.Context, sel ast.SelectionSet
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "addTag":
+			out.Values[i] = ec._Mutations_addTag(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "deleteTag":
+			out.Values[i] = ec._Mutations_deleteTag(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "login":
 			out.Values[i] = ec._Mutations_login(ctx, field)
 			if out.Values[i] == graphql.Null {
@@ -4426,6 +4854,20 @@ func (ec *executionContext) _Queries(ctx context.Context, sel ast.SelectionSet) 
 				}
 				return res
 			})
+		case "tags":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Queries_tags(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "get":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -4483,6 +4925,38 @@ func (ec *executionContext) _RolePermission(ctx context.Context, sel ast.Selecti
 			}
 		case "write":
 			out.Values[i] = ec._RolePermission_write(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var tagImplementors = []string{"Tag"}
+
+func (ec *executionContext) _Tag(ctx context.Context, sel ast.SelectionSet, obj *model.Tag) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, tagImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Tag")
+		case "key":
+			out.Values[i] = ec._Tag_key(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "name":
+			out.Values[i] = ec._Tag_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -5087,6 +5561,75 @@ func (ec *executionContext) marshalNString2ᚕᚖstring(ctx context.Context, sel
 	}
 
 	return ret
+}
+
+func (ec *executionContext) marshalNTag2ᚕᚖgithubᚗcomᚋatahaniᚋetcdᚑdashboardᚋapiᚋgraphᚋmodelᚐTagᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Tag) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNTag2ᚖgithubᚗcomᚋatahaniᚋetcdᚑdashboardᚋapiᚋgraphᚋmodelᚐTag(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNTag2ᚖgithubᚗcomᚋatahaniᚋetcdᚑdashboardᚋapiᚋgraphᚋmodelᚐTag(ctx context.Context, sel ast.SelectionSet, v *model.Tag) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Tag(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNTagInput2githubᚗcomᚋatahaniᚋetcdᚑdashboardᚋapiᚋgraphᚋmodelᚐTagInput(ctx context.Context, v interface{}) (model.TagInput, error) {
+	res, err := ec.unmarshalInputTagInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNTagType2githubᚗcomᚋatahaniᚋetcdᚑdashboardᚋapiᚋgraphᚋmodelᚐTagType(ctx context.Context, v interface{}) (model.TagType, error) {
+	var res model.TagType
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNTagType2githubᚗcomᚋatahaniᚋetcdᚑdashboardᚋapiᚋgraphᚋmodelᚐTagType(ctx context.Context, sel ast.SelectionSet, v model.TagType) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋatahaniᚋetcdᚑdashboardᚋapiᚋgraphᚋmodelᚐUserᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.User) graphql.Marshaler {

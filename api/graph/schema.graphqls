@@ -7,6 +7,11 @@ enum Role {
   ROOT
 }
 
+enum TagType {
+  PREFIX
+  POSTFIX
+}
+
 directive @hasRole(role: Role!) on FIELD_DEFINITION
 directive @authorized on FIELD_DEFINITION
 
@@ -14,6 +19,7 @@ type Queries {
   users: [User!]! @hasRole(role: ROOT)
   roles(username: String): [String!]! @hasRole(role: ROOT)
   permissions(role: String, username: String): [RolePermission!]! @hasRole(role: ROOT)
+  tags(type: TagType!): [Tag!]!
   get(key: String!): [KeyValue!]! @authorized
 }
 
@@ -29,6 +35,8 @@ type Mutations {
   resetPassword(username: String!): String! @hasRole(role: ROOT)
   grantPermission(data: GrantPermissionInput!): Boolean! @hasRole(role: ROOT)
   revokePermission(data: RevokePermissionInput!): Boolean! @hasRole(role: ROOT)
+  addTag(data: TagInput!): Boolean! @hasRole(role: ROOT)
+  deleteTag(key: String!, type: TagType!): Boolean! @hasRole(role: ROOT)
   login(username: String!, password: String!): LoginResult!
   changePassword(data: ChangePasswordInput!): Boolean! @authorized
   logout: Boolean!
@@ -101,4 +109,15 @@ input PutInput {
 type PutResult {
   revision: Int!
   leaseId: Int
+}
+
+type Tag {
+  key: String!
+  name: String!
+}
+
+input TagInput {
+  key: String!
+  name: String!
+  type: TagType!
 }
