@@ -85,3 +85,20 @@ export const GRANT_PERMISSION = gql`
         grantPermission(data: $data)
     }
 `
+
+export const REVOKE_PERMISSION = gql`
+    mutation RevokePermission($data: RevokePermissionInput!) {
+        revokePermission(data: $data)
+    }
+`
+
+export const GET_PERMISSION_BY_ROLE = gql`
+    query Permissions($role: String!) {
+        permissions(role: $role) {
+            key
+            rangeEnd
+            read
+            write
+        }
+    }
+`
