@@ -20,11 +20,7 @@ import React, { useEffect } from 'react'
 
 import { GET_ROLES } from 'utils/graphql/gql'
 import { handleCommonErr } from 'utils/graphql/handleError'
-
-type RoleOption = {
-    label: string
-    value: string
-}
+import { RoleOption } from 'types/ui'
 
 type FormData = {
     roles: RoleOption[]

@@ -7,12 +7,8 @@ import React, { useEffect, useState } from 'react'
 import { ADD_USER, GET_ROLES, GET_USERS } from 'utils/graphql/gql'
 import { AddUserInput, AddUserResult } from 'types/graphql'
 import { handleCommonErr } from 'utils/graphql/handleError'
+import { RoleOption } from 'types/ui'
 import PasswordModal from 'components/PasswordModal'
-
-type RoleOption = {
-    label: string
-    value: string
-}
 
 type FormData = {
     username: string

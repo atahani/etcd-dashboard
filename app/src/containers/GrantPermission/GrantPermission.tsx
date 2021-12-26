@@ -7,11 +7,7 @@ import React, { useEffect } from 'react'
 import { GET_ROLES, GRANT_PERMISSION } from 'utils/graphql/gql'
 import { GrantPermissionInput } from 'types/graphql'
 import { handleCommonErr } from 'utils/graphql/handleError'
-
-type RoleOption = {
-    label: string
-    value: string
-}
+import { RoleOption } from 'types/ui'
 
 type FormData = Omit<GrantPermissionInput, 'role'> & {
     role?: RoleOption
