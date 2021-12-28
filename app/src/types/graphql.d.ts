@@ -57,11 +57,13 @@ export type LoginResult = {
 export type Mutations = {
     __typename?: 'Mutations'
     addRole: Scalars['Boolean']
+    addTag: Scalars['Boolean']
     addUser: AddUserResult
     assignRoleToUser: Scalars['Boolean']
     changePassword: Scalars['Boolean']
     changeUserRoles: Scalars['Boolean']
     deleteRole: Scalars['Boolean']
+    deleteTag: Scalars['Boolean']
     deleteUser: Scalars['Boolean']
     grantPermission: Scalars['Boolean']
     initialize: InitializeResult
@@ -75,6 +77,10 @@ export type Mutations = {
 
 export type MutationsAddRoleArgs = {
     name: Scalars['String']
+}
+
+export type MutationsAddTagArgs = {
+    data: TagInput
 }
 
 export type MutationsAddUserArgs = {
@@ -97,6 +103,11 @@ export type MutationsChangeUserRolesArgs = {
 
 export type MutationsDeleteRoleArgs = {
     name: Scalars['String']
+}
+
+export type MutationsDeleteTagArgs = {
+    key: Scalars['String']
+    type: TagType
 }
 
 export type MutationsDeleteUserArgs = {
@@ -146,6 +157,7 @@ export type Queries = {
     get: Array<KeyValue>
     permissions: Array<RolePermission>
     roles: Array<Scalars['String']>
+    tags: Array<Tag>
     users: Array<User>
 }
 
@@ -160,6 +172,10 @@ export type QueriesPermissionsArgs = {
 
 export type QueriesRolesArgs = {
     username?: Maybe<Scalars['String']>
+}
+
+export type QueriesTagsArgs = {
+    type: TagType
 }
 
 export type RevokePermissionInput = {
@@ -178,6 +194,23 @@ export type RolePermission = {
     rangeEnd: Scalars['String']
     read: Scalars['Boolean']
     write: Scalars['Boolean']
+}
+
+export type Tag = {
+    __typename?: 'Tag'
+    key: Scalars['String']
+    name: Scalars['String']
+}
+
+export type TagInput = {
+    key: Scalars['String']
+    name: Scalars['String']
+    type: TagType
+}
+
+export enum TagType {
+    Postfix = 'POSTFIX',
+    Prefix = 'PREFIX',
 }
 
 export type User = {

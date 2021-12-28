@@ -4,6 +4,7 @@ import { Route, Routes } from 'react-router'
 import React from 'react'
 
 import { getUserRoles } from 'utils/persistData'
+import AddTag from 'containers/AddTag'
 import AddUser from 'containers/AddUser'
 import ChangePassword from 'containers/ChangePassword'
 import ColorModeSwitcher from 'components/ColorModeSwitcher'
@@ -50,6 +51,7 @@ export const Dashboard: React.FC = () => {
                     {hasRootRole && <Route path="users" element={<Users />} />}
                     {hasRootRole && <Route path="permissions/grant" element={<GrantPermission />} />}
                     {hasRootRole && <Route path="permissions" element={<Permissions />} />}
+                    {hasRootRole && <Route path="tags/add" element={<AddTag />} />}
                     {hasRootRole && <Route path="tags" element={<Tags />} />}
                     <Route path="*" element={<NotFound />} />
                 </Routes>

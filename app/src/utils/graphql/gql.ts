@@ -102,3 +102,24 @@ export const GET_PERMISSION_BY_ROLE = gql`
         }
     }
 `
+
+export const GET_TAGS = gql`
+    query GetTags($type: TagType!) {
+        tags(type: $type) {
+            key
+            name
+        }
+    }
+`
+
+export const ADD_TAG = gql`
+    mutation AddTag($data: TagInput!) {
+        addTag(data: $data)
+    }
+`
+
+export const DELETE_TAG = gql`
+    mutation DeleteTag($key: String!, $type: TagType!) {
+        deleteTag(key: $key, type: $type)
+    }
+`
