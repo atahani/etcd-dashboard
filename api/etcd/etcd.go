@@ -11,6 +11,7 @@ import (
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/client/v3/credentials"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/status"
 )
 
 type Etcd struct {
@@ -88,6 +89,12 @@ func (e *Etcd) ProcessCommonError(err error) (bool, error) {
 	}
 	if err == context.DeadlineExceeded || err == grpc.ErrClientConnTimeout || err == grpc.ErrClientConnClosing || err == grpc.ErrServerStopped {
 		return true, fmt.Errorf("etcd timeout")
+	}
+	if status.Convert(err).Message() == "auth: revision in header is old" {
+		// after any update on auth state, like adding role, or chaning the permission
+		// the auth revion header will be change, and if it's old
+		// the user should re authorized
+		return true, fmt.Errorf("access denied")
 	}
 	return false, nil
 }
